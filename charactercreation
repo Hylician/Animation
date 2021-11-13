@@ -1,4 +1,9 @@
-(function(Character)
+local Players = game:GetService("Players")
+
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+
+(function()
   local FakeCharacter = game:GetObjects("rbxassetid://7988958130")[1]
   FakeCharacter:SetPrimaryPartCFrame(Character.PrimaryPart.CFrame)
   FakeCharacter.Parent = Character
