@@ -1,0 +1,95 @@
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local Animator = (Humanoid:FindFirstChild("Animator") or Instance.new("Animator", Humanoid))
+
+local AnimationTable = {}
+local Movement = Enum.AnimationPriority.Movement
+local function SetAnimation(Name, AnimationId, Priority)
+	local Animation = Instance.new("Animation", Character)
+	Animation.AnimationId = "rbxassetid://" .. tostring(AnimationId)
+	local LoadedAnimation = Animator:LoadAnimation(Animation)
+	LoadedAnimation.Name = Name
+	if Priority then
+		LoadedAnimation.Priority = Priority
+	elseif Name == "Idle" then
+		LoadedAnimation.Priority = Enum.AnimationPriority.Idle
+	elseif table.find({"Walk", "Run"}, Name) then
+		LoadedAnimation.Priority = Enum.AnimationPriority.Movement
+	end
+	
+	if AnimationTable[Name] and AnimationTable[Name].IsPlaying then
+		AnimationTable[Name]:Stop()
+		AnimationTable[Name]:Destroy()
+		LoadedAnimation:Play()
+	end
+	
+	AnimationTable[Name] = LoadedAnimation
+end
+
+SetAnimation("Idle", 180435571)
+SetAnimation("Walk", 180426354, Movement)
+SetAnimation("Run", 180426354, Movement)
+SetAnimation("Jump", 125750702, Movement)
+SetAnimation("Fall", 180436148, Movement)
+SetAnimation("Sit", 178130996, Movement)
+
+local function PlayAnimation(Animation, Speed)
+	local NotPlaying = true
+	if Animation.IsPlaying then
+		NotPlaying = false
+	end
+	
+	if NotPlaying then
+		Animation:Play(Speed)
+	end
+end
+
+RunService.RenderStepped:Connect(function()
+	if Humanoid.PlatformStand then
+		for _, Animation in pairs(AnimationTable) do
+			Animation:Stop()
+		end
+	elseif Humanoid:GetState() == Enum.HumanoidStateType.Seated and AnimationTable.Sit then
+		PlayAnimation(AnimationTable.Sit)
+	elseif not Humanoid.FloorMaterial or Humanoid.FloorMaterial == Enum.Material.Air then
+		if not AnimationTable.Fall.IsPlaying and not AnimationTable.Jump.IsPlaying then
+			AnimationTable.Fall:Play()
+		end
+		
+		AnimationTable.Idle:Stop()
+		AnimationTable.Walk:Stop()
+		AnimationTable.Run:Stop()
+	elseif Humanoid.MoveDirection.Magnitude > 0 and Humanoid.WalkSpeed > 0 then
+		local WalkSpeed = (Humanoid.WalkSpeed - 25) / 25
+		if WalkSpeed < 0 then
+			PlayAnimation(AnimationTable.Walk)
+			AnimationTable.Run:Stop()
+		elseif WalkSpeed < 1 then
+			PlayAnimation(AnimationTable.Run)
+			AnimationTable.Run:AdjustSpeed(1)
+			AnimationTable.Walk:Stop()
+		end
+		
+		AnimationTable.Fall:Stop()
+		AnimationTable.Idle:Stop()
+	else
+		PlayAnimation(AnimationTable.Idle)
+		AnimationTable.Walk:Stop()
+		AnimationTable.Run:Stop()
+		AnimationTable.Fall:Stop()
+	end
+	
+	if AnimationTable.Sit and Humanoid:GetState() ~= Enum.HumanoidStateType.Seated then
+		AnimationTable.Sit:Stop()
+	end
+end)
+
+Humanoid.Jumping:Connect(function()
+	if AnimationTable.Jump then
+		AnimationTable.Jump:Play()
+	end
+end)
