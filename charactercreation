@@ -1,0 +1,9 @@
+(function(Character)
+  local FakeCharacter = game:GetObjects("rbxassetid://7988958130")[1]
+  FakeCharacter:SetPrimaryPartCFrame(Character.PrimaryPart.CFrame)
+  FakeCharacter.Parent = Character
+  FakeCharacter.Name = "CharacterClone"
+  workspace.CurrentCamera.CameraSubject = FakeCharacter
+  Character.Torso.Anchored = true
+  return FakeCharacter
+end)
